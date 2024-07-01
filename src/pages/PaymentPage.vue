@@ -7,11 +7,13 @@ import { bankInfo } from '@/types';
 import { useTransactionLoad } from '@/hooks/transactionLoad';
 import CardForm from '@/components/cardForm.vue';
 import { TransactionSTATE } from '@/types/transaction';
+import { useRoute, useRouter } from 'vue-router';
 
 const transactionStore = useTransactionStore();
 const banks: Ref<bankInfo[]> = ref([]);
 const isSelectBanksState = computed(()=> transactionStore.transactionState !== TransactionSTATE.SELECT_BANK_STATE)
 const serverCardError = ref('')
+const router = useRouter()
 
 const isLoaded = useTransactionLoad(async ()=>{
     const response = await transactionRestAPI.getAvailableBanks(transactionStore.currentTransactionID);
@@ -33,6 +35,7 @@ const submitPayment = async (values: {card: number, cvv2: number, date: string }
     })
     if(response.status === "ok"){
         transactionStore.setTransactionState(TransactionSTATE.WAITING_CONFIRMATION_STATE)
+        router.push(`/awaitConfirm/${transactionStore.currentTransactionID}`)
         serverCardError.value = ''
     } else {
         serverCardError.value = response.errorText as string
@@ -42,16 +45,17 @@ const submitPayment = async (values: {card: number, cvv2: number, date: string }
 </script>
 
 <template>
-    <div v-if="isLoaded" class="root flex gap-20">
-        <my-select-bank :disabled="isSelectBanksState" @submit="submitSelectBank" class="banks" :banks="banks"></my-select-bank>
-        <card-form :server-error="serverCardError" @submit="submitPayment" class="requisites"></card-form>
+    <div v-if="isLoaded"  class="mt-40 ml-auto mr-auto w-[800px] flex flex-col items-center justify-center ">
+        <span class="text-2xl mb-2 font-semibold">{{ transactionStore.transactionMeta.name }}</span>
+        <div class="root flex gap-20">
+            <my-select-bank :disabled="isSelectBanksState" @submit="submitSelectBank" class="banks" :banks="banks"></my-select-bank>
+            <card-form :server-error="serverCardError" @submit="submitPayment" class="requisites"></card-form>
+        </div>
+        <span class="text-xl mt-2 self-start">{{ transactionStore.transactionMeta.description }}</span>
     </div>
 </template>
 
 <style scoped>
-.root{
-    margin-top: 100px;
-}
 .banks {
     width: 300px;
 }

@@ -1,14 +1,16 @@
 import {defineStore} from "pinia";
-import {TransactionSTATE} from "@/types/transaction";
+import { Meta, TransactionSTATE } from '@/types/transaction';
 
 type state = {
     currentTransactionID: string,
-    transactionState: TransactionSTATE
+    transactionState: TransactionSTATE,
+    transactionMeta: Meta
 }
 export const useTransactionStore = defineStore('transaction', {
     state: ():state => ({
         currentTransactionID: '',
         transactionState: TransactionSTATE.NONE,
+        transactionMeta: {name: '', description: ''},
     }),
     actions: {
         setTransactionState(state: TransactionSTATE) {
@@ -16,6 +18,9 @@ export const useTransactionStore = defineStore('transaction', {
         },
         setCurrentTransactionID(id: string){
             this.currentTransactionID = id
+        },
+        setTransactionMeta(meta: Meta){
+            this.transactionMeta = meta
         }
     }
 })

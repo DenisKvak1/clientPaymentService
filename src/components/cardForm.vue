@@ -10,6 +10,10 @@ type form = {
     cvv2: number,
     date: string
 }
+const props = defineProps<{
+    serverError?: string
+}>()
+
 const emit = defineEmits<{
     (event: 'submit', values: form): void;
 }>()
@@ -82,6 +86,7 @@ const onSubmit = handleSubmit((values)=>{
                 </div>
             </div>
         </div>
+        {{props.serverError}}
         <Button @click="onSubmit" class="mt-2">Подтведрить</Button>
     </form>
 </template>

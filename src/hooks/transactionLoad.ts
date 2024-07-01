@@ -16,6 +16,7 @@ export function useTransactionLoad(callback:Function) {
 
         if(transactionInfo?.transactionInfo){
             transactionStore.setCurrentTransactionID(transactionID)
+            transactionStore.setTransactionState(transactionInfo.transactionInfo.state)
             callback()
         } else {
             await router.push(`/notFound`)

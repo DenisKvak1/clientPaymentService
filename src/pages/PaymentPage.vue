@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import MySelectBank from '@/components/My-SelectBank.vue';
-import { onMounted, Ref, ref } from 'vue';
+import { computed, onMounted, Ref, ref } from 'vue';
 import { transactionRestAPI } from '@/API/transactionAPI/REST API';
 import { useTransactionStore } from '@/stores/transactionStore';
 import { bankInfo } from '@/types';
@@ -10,14 +10,18 @@ import { TransactionSTATE } from '@/types/transaction';
 
 const transactionStore = useTransactionStore();
 const banks: Ref<bankInfo[]> = ref([]);
+const isSelectBanksState = computed(()=> transactionStore.transactionState !== TransactionSTATE.SELECT_BANK_STATE)
+const serverCardError = ref('')
 
 const isLoaded = useTransactionLoad(async ()=>{
     const response = await transactionRestAPI.getAvailableBanks(transactionStore.currentTransactionID);
     banks.value = response.availableBanks
 })
 const submitSelectBank = async (bankID: string)=> {
-    const response = await transactionRestAPI.selectBank(bankID, bankID);
-    console.log(response)
+    const response = await transactionRestAPI.selectBank(transactionStore.currentTransactionID, bankID);
+    if(response.status === 'ok'){
+        transactionStore.setTransactionState(TransactionSTATE.WAITING_FOR_REQUISITES_STATE)
+    }
 }
 const submitPayment = async (values: {card: number, cvv2: number, date: string })=> {
     const response = await transactionRestAPI.confirmPayment(
@@ -29,6 +33,9 @@ const submitPayment = async (values: {card: number, cvv2: number, date: string }
     })
     if(response.status === "ok"){
         transactionStore.setTransactionState(TransactionSTATE.WAITING_CONFIRMATION_STATE)
+        serverCardError.value = ''
+    } else {
+        serverCardError.value = response.errorText as string
     }
 }
 
@@ -36,8 +43,8 @@ const submitPayment = async (values: {card: number, cvv2: number, date: string }
 
 <template>
     <div v-if="isLoaded" class="root flex gap-20">
-        <my-select-bank @submit="submitSelectBank" class="banks" :banks="banks"></my-select-bank>
-        <card-form @submit="submitPayment" class="requisites"></card-form>
+        <my-select-bank :disabled="isSelectBanksState" @submit="submitSelectBank" class="banks" :banks="banks"></my-select-bank>
+        <card-form :server-error="serverCardError" @submit="submitPayment" class="requisites"></card-form>
     </div>
 </template>
 
